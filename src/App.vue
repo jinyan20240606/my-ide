@@ -3,13 +3,32 @@ import { onMounted } from 'vue'
 import { useMonacoEditor } from './hooks/useMonacoEditor'
 const { monacoRef, initMonaco } = useMonacoEditor()
 
-onMounted(async()=>{
-	await initMonaco()
+onMounted(async () => {
+  await initMonaco()
   console.log(monacoRef.value, '8----', document.getElementById('container'))
   const wrapper = document.getElementById('container')
-  monacoRef.value.editor.create(wrapper, {
-  	value: "function hello() {\n\talert('Hello world!');\n}",
-  	language: 'javascript',
+  monacoRef.value.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+    // 语义检查
+    noSemanticValidation: false,
+    // 语法检查
+    noSyntaxValidation: false,
+  })
+  monacoRef.value.languages.typescript.javascriptDefaults.setCompilerOptions({
+    // 目标js版本
+    target: monaco.languages.typescript.ScriptTarget.ES2020,
+    // 允许非ts文件
+    allowNonTsExtensions: true,
+  })
+
+  let uri = monacoRef.value.Uri.parse(`file:///main.ts`);
+  console.log(uri, '24------')
+  const model1 = monacoRef.value.editor.createModel(
+    ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
+    'javascript',
+    uri // 用于模拟文件路径，非必需
+  );
+
+  let obj1 = {
     theme: 'vs-dark', //官方自带三种主题vs, hc-black, or vs-dark
     fontSize: 20,
     autoIndent: 'full',
@@ -21,17 +40,25 @@ onMounted(async()=>{
     autoClosingQuotes: 'always', // 是否自动添加结束的单引号 双引号 "always" | "languageDefined" | "beforeWhitespace" | "never"
     automaticLayout: true, // 自动布局
     codeLens: true,
+  }
+  // model1.updateOptions()
+  monacoRef.value.editor.create(wrapper, {
+    model: model1,
+    ...obj1
   });
 
+
+  let uri2 = monacoRef.value.Uri.parse(`file:///main2.ts`);
+  console.log(model1, '24------')
+  const model2 = monacoRef.value.editor.createModel(
+    ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
+    'javascript',
+    uri2 // 用于模拟文件路径，非必需
+  );
   const wrapper2 = document.getElementById('container2')
   monacoRef.value.editor.create(wrapper2, {
-  	value: "function hello() {\n\talert('Hello world!');\n}",
-  	language: 'javascript',
-    theme: 'vs-dark', //官方自带三种主题vs, hc-black, or vs-dark
-    fontSize: 20,
-    autoIndent: 'full',
-    // formatOnType: true,
-    // formatOnPaste: true
+    model: model2,
+    ...obj1   
   });
 })
 
@@ -44,7 +71,7 @@ onMounted(async()=>{
   </div>
   <div class="editor-wrap" id="container2">
 
-</div>
+  </div>
 </template>
 
 <style scoped>
